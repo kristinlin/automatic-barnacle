@@ -171,8 +171,9 @@ void add_sphere( struct matrix * edges,
                  double cx, double cy, double cz,
                  double r, int step ) {
 
+  print_matrix(edges);
   struct matrix *points = generate_sphere(cx, cy, cz, r, step);
-  int index, lat, longt;
+  int index, lat, longt, prev_index, next_index;
   int latStop, longStop, latStart, longStart;
   latStart = 0;
   latStop = step;
@@ -181,15 +182,38 @@ void add_sphere( struct matrix * edges,
 
   step++;
   for ( lat = latStart; lat < latStop; lat++ ) {
-    for ( longt = longStart; longt <= longStop; longt++ ) {
+    for ( longt = longStart; longt < longStop; longt++ ) {
 
       index = lat * (step) + longt;
-      add_edge( edges, points->m[0][index],
-                points->m[1][index],
-                points->m[2][index],
-                points->m[0][index] + 1,
-                points->m[1][index] + 1,
-                points->m[2][index] + 1);
+      next_index = (lat+1) * (step) + longt;
+      prev_index = (lat-1) * (step) + longt+1;
+
+      if (lat == 0) {
+	prev_index = (latStop-1) * (step) + longt+1;
+      }
+      if (lat + 1 == latStop) {
+	next_index = longt;
+      }
+      add_polygon( edges,
+		   points->m[0][index],
+		   points->m[1][index],
+		   points->m[2][index],
+		   points->m[0][index+1],
+		   points->m[1][index+1],
+		   points->m[2][index+1],
+		   points->m[0][next_index],
+		   points->m[1][next_index],
+		   points->m[2][next_index]);
+      add_polygon( edges,
+		   points->m[0][index],
+		   points->m[1][index],
+		   points->m[2][index],
+		   points->m[0][index+1],
+		   points->m[1][index+1],
+		   points->m[2][index+1],
+		   points->m[0][prev_index],
+		   points->m[1][prev_index],
+		   points->m[2][prev_index]);
     }
   }
   free_matrix(points);
