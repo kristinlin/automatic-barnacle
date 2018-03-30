@@ -45,6 +45,7 @@ void draw_polygons( struct matrix *polygons, screen s, color c ) {
   int col;
   int a[3], b[3], n[3];
   for (col = 0; col+2 < polygons->lastcol; col += 3) {
+    //calculate N
     a[0] = polygons->m[0][col+1] - polygons->m[0][col];
     b[0] = polygons->m[0][col+2] - polygons->m[0][col];
     a[1] = polygons->m[1][col+1] - polygons->m[1][col];
@@ -54,6 +55,7 @@ void draw_polygons( struct matrix *polygons, screen s, color c ) {
     n[0] = a[0]*b[2] - a[2]*b[0];
     n[1] = a[2]*b[0] - a[0]*b[2];
     n[2] = a[0]*b[1] - a[1]*b[0];
+    //V is 0, 0, 1; if Nz is positive, draw
     if (n[2] > 0) {
       draw_line(polygons->m[0][col],
 		polygons->m[1][col],
@@ -196,16 +198,20 @@ void add_sphere( struct matrix * edges,
   for ( lat = latStart; lat < latStop; lat++ ) {
     for ( longt = longStart; longt < longStop; longt++ ) {
 
+      //calculate the top and bottom points of the two triangles
       index = lat * (step) + longt;
       next_index = (lat+1) * (step) + longt;
       prev_index = (lat-1) * (step) + longt+1;
 
+      //wrap the first line of triangle points to last
       if (lat == 0) {
 	prev_index = (latStop-1) * (step) + longt+1;
       }
       if (lat + 1 == latStop) {
 	next_index = longt;
       }
+      
+      //draw the two triangles
       add_polygon( edges,
 		   points->m[0][index],
 		   points->m[1][index],
