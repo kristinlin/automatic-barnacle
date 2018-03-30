@@ -43,22 +43,34 @@ void add_polygon( struct matrix *polygons,
   ====================*/
 void draw_polygons( struct matrix *polygons, screen s, color c ) {
   int col;
-  for (col = 0; col < polygons->lastcol; col += 3) {
-    draw_line(polygons->m[0][col],
-	      polygons->m[1][col],
-	      polygons->m[0][col+1],
-	      polygons->m[1][col+1],
-	      s, c);
-    draw_line(polygons->m[0][col+1],
-	      polygons->m[1][col+1],
-	      polygons->m[0][col+2],
-	      polygons->m[1][col+2],
-	      s, c);
-    draw_line(polygons->m[0][col+2],
-	      polygons->m[1][col+2],
-	      polygons->m[0][col],
-	      polygons->m[1][col],
-	      s, c);
+  int a[3], b[3], n[3];
+  for (col = 0; col+2 < polygons->lastcol; col += 3) {
+    a[0] = polygons->m[0][col+1] - polygons->m[0][col];
+    b[0] = polygons->m[0][col+2] - polygons->m[0][col];
+    a[1] = polygons->m[1][col+1] - polygons->m[1][col];
+    b[1] = polygons->m[1][col+2] - polygons->m[1][col];
+    a[2] = polygons->m[2][col+1] - polygons->m[2][col];
+    b[2] = polygons->m[2][col+2] - polygons->m[2][col];
+    n[0] = a[0]*b[2] - a[2]*b[0];
+    n[1] = a[2]*b[0] - a[0]*b[2];
+    n[2] = a[0]*b[1] - a[1]*b[0];
+    if (n[2] > 0) {
+      draw_line(polygons->m[0][col],
+		polygons->m[1][col],
+		polygons->m[0][col+1],
+		polygons->m[1][col+1],
+		s, c);
+      draw_line(polygons->m[0][col+1],
+		polygons->m[1][col+1],
+		polygons->m[0][col+2],
+		polygons->m[1][col+2],
+		s, c);
+      draw_line(polygons->m[0][col+2],
+		polygons->m[1][col+2],
+		polygons->m[0][col],
+		polygons->m[1][col],
+		s, c);
+    }
   }
 }
 
@@ -205,12 +217,12 @@ void add_sphere( struct matrix * edges,
 		   points->m[1][next_index],
 		   points->m[2][next_index]);
       add_polygon( edges,
-		   points->m[0][index],
-		   points->m[1][index],
-		   points->m[2][index],
 		   points->m[0][index+1],
 		   points->m[1][index+1],
 		   points->m[2][index+1],
+		   points->m[0][index],
+		   points->m[1][index],
+		   points->m[2][index],
 		   points->m[0][prev_index],
 		   points->m[1][prev_index],
 		   points->m[2][prev_index]);
