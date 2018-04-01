@@ -43,20 +43,16 @@ void add_polygon( struct matrix *polygons,
   ====================*/
 void draw_polygons( struct matrix *polygons, screen s, color c ) {
   int col;
-  int a[3], b[3], n[3];
+  int a[2], b[2], n;
   for (col = 0; col+2 < polygons->lastcol; col += 3) {
     //calculate N
     a[0] = polygons->m[0][col+1] - polygons->m[0][col];
     b[0] = polygons->m[0][col+2] - polygons->m[0][col];
     a[1] = polygons->m[1][col+1] - polygons->m[1][col];
     b[1] = polygons->m[1][col+2] - polygons->m[1][col];
-    a[2] = polygons->m[2][col+1] - polygons->m[2][col];
-    b[2] = polygons->m[2][col+2] - polygons->m[2][col];
-    n[0] = a[0]*b[2] - a[2]*b[0];
-    n[1] = a[2]*b[0] - a[0]*b[2];
-    n[2] = a[0]*b[1] - a[1]*b[0];
+    n = a[0]*b[1] - a[1]*b[0];
     //V is 0, 0, 1; if Nz is positive, draw
-    if (n[2] > 0) {
+    //    if (n > 0) {
       draw_line(polygons->m[0][col],
 		polygons->m[1][col],
 		polygons->m[0][col+1],
@@ -72,7 +68,7 @@ void draw_polygons( struct matrix *polygons, screen s, color c ) {
 		polygons->m[0][col],
 		polygons->m[1][col],
 		s, c);
-    }
+      //    }
   }
 }
 
@@ -204,7 +200,7 @@ void add_sphere( struct matrix * edges,
       prev_index = (lat-1) * (step) + longt+1;
 
       //wrap the first line of triangle points to last
-      if (lat == 0) {
+      if (lat == latStart) {
 	prev_index = (latStop-1) * (step) + longt+1;
       }
       if (lat + 1 == latStop) {
@@ -303,7 +299,7 @@ void add_torus( struct matrix * edges,
                 double r1, double r2, int step ) {
 
   struct matrix *points = generate_torus(cx, cy, cz, r1, r2, step);
-  int index, lat, longt;
+  int index, lat, longt, next_index, prev_index;
   int latStop, longStop, latStart, longStart;
   latStart = 0;
   latStop = step;
@@ -314,12 +310,49 @@ void add_torus( struct matrix * edges,
     for ( longt = longStart; longt < longStop; longt++ ) {
 
       index = lat * step + longt;
-      add_edge( edges, points->m[0][index],
-                points->m[1][index],
+      next_index = (lat+1) * step + longt;
+      prev_index = (lat-1) * step + longt + 1;
+
+      //connect the two
+      if (lat + 1 == latStop) {
+	next_index = longt;
+      }
+      if (lat == latStart) {
+	prev_index = (latStop-1)*step + longt+1;
+      }
+
+      if(lat == latStart && longt == longStop - 1) {
+	//dont 
+      } else {
+      //add polygon
+      add_polygon(edges,
+		  points->m[0][index],
+		  points->m[1][index],
+		  points->m[2][index],
+		  points->m[0][index+1],
+		  points->m[1][index+1],
+		  points->m[2][index+1],
+		  points->m[0][next_index],
+		  points->m[1][next_index],
+		  points->m[2][next_index]);
+      add_polygon(edges,
+		  points->m[0][index],
+		  points->m[1][index],
+		  points->m[2][index],
+		  points->m[0][prev_index],
+		  points->m[1][prev_index],
+		  points->m[2][prev_index],
+		  points->m[0][index+1],
+		  points->m[1][index+1],
+		  points->m[2][index+1]);
+      }	  
+      /*      add_edge( edges, points->m[0][index],
+	
+	      points->m[1][index],
                 points->m[2][index],
                 points->m[0][index] + 1,
                 points->m[1][index] + 1,
-                points->m[2][index] + 1);
+                points->m[2][index] + 1);*/
     }
   }
   free_matrix(points);
