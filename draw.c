@@ -52,7 +52,7 @@ void draw_polygons( struct matrix *polygons, screen s, color c ) {
     b[1] = polygons->m[1][col+2] - polygons->m[1][col];
     n = a[0]*b[1] - a[1]*b[0];
     //V is 0, 0, 1; if Nz is positive, draw
-    //    if (n > 0) {
+    if (n > 0) {
       draw_line(polygons->m[0][col],
 		polygons->m[1][col],
 		polygons->m[0][col+1],
@@ -68,7 +68,7 @@ void draw_polygons( struct matrix *polygons, screen s, color c ) {
 		polygons->m[0][col],
 		polygons->m[1][col],
 		s, c);
-      //    }
+    }
   }
 }
 
@@ -183,7 +183,7 @@ void add_sphere( struct matrix * edges,
 
   print_matrix(edges);
   struct matrix *points = generate_sphere(cx, cy, cz, r, step);
-  int index, lat, longt, prev_index, next_index;
+  int index, index_2, lat, longt, prev_index, next_index;
   int latStop, longStop, latStart, longStart;
   latStart = 0;
   latStop = step;
@@ -196,15 +196,22 @@ void add_sphere( struct matrix * edges,
 
       //calculate the top and bottom points of the two triangles
       index = lat * (step) + longt;
+      index_2 = index+1;
       next_index = (lat+1) * (step) + longt;
       prev_index = (lat-1) * (step) + longt+1;
 
       //wrap the first line of triangle points to last
       if (lat == latStart) {
+	if (longt+1 == longStop) {
+	  prev_index = latStart;
+	}
 	prev_index = (latStop-1) * (step) + longt+1;
       }
       if (lat + 1 == latStop) {
 	next_index = longt;
+      }
+      if (index_2 == latStop * step) {
+	index_2 = 0;
       }
       
       //draw the two triangles
@@ -212,16 +219,16 @@ void add_sphere( struct matrix * edges,
 		   points->m[0][index],
 		   points->m[1][index],
 		   points->m[2][index],
-		   points->m[0][index+1],
-		   points->m[1][index+1],
-		   points->m[2][index+1],
+		   points->m[0][index_2],
+		   points->m[1][index_2],
+		   points->m[2][index_2],
 		   points->m[0][next_index],
 		   points->m[1][next_index],
 		   points->m[2][next_index]);
       add_polygon( edges,
-		   points->m[0][index+1],
-		   points->m[1][index+1],
-		   points->m[2][index+1],
+		   points->m[0][index_2],
+		   points->m[1][index_2],
+		   points->m[2][index_2],
 		   points->m[0][index],
 		   points->m[1][index],
 		   points->m[2][index],
@@ -299,7 +306,7 @@ void add_torus( struct matrix * edges,
                 double r1, double r2, int step ) {
 
   struct matrix *points = generate_torus(cx, cy, cz, r1, r2, step);
-  int index, lat, longt, next_index, prev_index;
+  int index, index_2, lat, longt, next_index, prev_index;
   int latStop, longStop, latStart, longStart;
   latStart = 0;
   latStop = step;
@@ -310,28 +317,35 @@ void add_torus( struct matrix * edges,
     for ( longt = longStart; longt < longStop; longt++ ) {
 
       index = lat * step + longt;
+      index_2 = index+1;
       next_index = (lat+1) * step + longt;
       prev_index = (lat-1) * step + longt + 1;
 
-      //connect the two
+      //connect the two ends
+      //if at end, next_index is at beginning
       if (lat + 1 == latStop) {
 	next_index = longt;
       }
+      //if at start, last index is at end
       if (lat == latStart) {
-	prev_index = (latStop-1)*step + longt+1;
+	if (longt+1 == longStop) {
+	  prev_index = latStart;
+	} else {
+	  prev_index = (latStop-1)*step + longt+1;
+	}
+      }
+      if (index_2 == latStop*step) {
+	index_2 = 0;
       }
 
-      if(lat == latStart && longt == longStop - 1) {
-	//dont 
-      } else {
       //add polygon
       add_polygon(edges,
 		  points->m[0][index],
 		  points->m[1][index],
 		  points->m[2][index],
-		  points->m[0][index+1],
-		  points->m[1][index+1],
-		  points->m[2][index+1],
+		  points->m[0][index_2],
+		  points->m[1][index_2],
+		  points->m[2][index_2],
 		  points->m[0][next_index],
 		  points->m[1][next_index],
 		  points->m[2][next_index]);
@@ -342,10 +356,10 @@ void add_torus( struct matrix * edges,
 		  points->m[0][prev_index],
 		  points->m[1][prev_index],
 		  points->m[2][prev_index],
-		  points->m[0][index+1],
-		  points->m[1][index+1],
-		  points->m[2][index+1]);
-      }	  
+		  points->m[0][index_2],
+		  points->m[1][index_2],
+		  points->m[2][index_2]);
+
       /*      add_edge( edges, points->m[0][index],
 	
 	      points->m[1][index],
